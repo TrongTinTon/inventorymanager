@@ -29,9 +29,18 @@ public:
     T get(int index) const;
     void set(int index, T value);
     void add(const T &value);
-    string toString() const;
+    void remove(int index);
+    string
+    toString() const;
 
-    friend ostream &operator<<(ostream &os, const List1D<T> &list);
+    friend ostream &operator<<(ostream &os, const List1D<T> &list)
+    {
+        for (int i = 0; i < list.size(); i++)
+        {
+            os << list.get(i) << " ";
+        }
+        return os;
+    };
 };
 
 // -------------------- List2D --------------------
@@ -52,16 +61,26 @@ public:
     T get(int rowIndex, int colIndex) const;
     List1D<T> getRow(int rowIndex) const;
     string toString() const;
+    void removeRow(int index);
 
-    friend ostream &operator<<(ostream &os, const List2D<T> &matrix);
+    friend ostream &operator<<(ostream &os, const List2D<T> &matrix)
+    {
+        for (int i = 0; i < matrix.rows(); i++)
+        {
+            os << matrix.getRow(i) << "\n";
+        }
+
+        return os;
+    };
 };
 
 struct InventoryAttribute
 {
     string name;
     double value;
+    InventoryAttribute() : name(""), value(0.0) {}
     InventoryAttribute(const string &name, double value) : name(name), value(value) {}
-    string toString() const { return name + ": " + to_string(value); }
+    string toString() const;
 };
 
 // -------------------- InventoryManager --------------------
@@ -109,227 +128,399 @@ public:
 template <typename T>
 List1D<T>::List1D()
 {
-    // TODO
+    pList = new XArrayList<T>();
 }
 
 template <typename T>
 List1D<T>::List1D(int num_elements)
 {
-    // TODO
+    pList = new XArrayList<T>();
+    for (int i = 0; i < num_elements; i++)
+    {
+        pList->add(T());
+    }
 }
 
 template <typename T>
 List1D<T>::List1D(const T *array, int num_elements)
 {
-    // TODO
+    pList = new XArrayList<T>();
+    for (int i = 0; i < num_elements; i++)
+    {
+        pList->add(array[i]);
+    }
 }
 
 template <typename T>
 List1D<T>::List1D(const List1D<T> &other)
 {
-    // TODO
+    pList = new XArrayList<T>();
+    for (int i = 0; i < other.size(); i++)
+    {
+        pList->add(other.get(i));
+    }
 }
 
 template <typename T>
 List1D<T>::~List1D()
 {
-    // TODO
+    delete pList;
 }
 
 template <typename T>
 int List1D<T>::size() const
 {
-    // TODO
+    return pList->size();
 }
 
 template <typename T>
 T List1D<T>::get(int index) const
 {
-    // TODO
+    return pList->get(index);
 }
 
 template <typename T>
 void List1D<T>::set(int index, T value)
 {
-    // TODO
+    pList->get(index) = value;
 }
 
 template <typename T>
 void List1D<T>::add(const T &value)
 {
-    // TODO
+    pList->add(value);
 }
 
 template <typename T>
 string List1D<T>::toString() const
 {
-    // TODO
+    return pList->toString();
 }
 
 template <typename T>
 ostream &operator<<(ostream &os, const List1D<T> &list)
 {
-    // TODO
+    for (int i = 0; i < list.size(); i++)
+    {
+        os << list.get(i) << " ";
+    }
     return os;
 }
 
+template <typename T>
+void List1D<T>::remove(int index)
+{
+    pList->removeAt(index);
+}
 // -------------------- List2D Method Definitions --------------------
 template <typename T>
 List2D<T>::List2D()
 {
-    // TODO
+    pMatrix = new XArrayList<IList<T> *>();
 }
 
 template <typename T>
 List2D<T>::List2D(List1D<T> *array, int num_rows)
 {
-    // TODO
+    pMatrix = new XArrayList<IList<T> *>();
+    for (int i = 0; i < num_rows; i++)
+    {
+        pMatrix->add(new XArrayList<T>());
+        for (int j = 0; j < array[i].size(); j++)
+        {
+            pMatrix->get(i)->add(array[i].get(j));
+        }
+    }
 }
 
 template <typename T>
 List2D<T>::List2D(const List2D<T> &other)
 {
-    // TODO
+    pMatrix = new XArrayList<IList<T> *>();
+    for (int i = 0; i < other.rows(); i++)
+    {
+        IList<T> *row = new XArrayList<T>();
+        for (int j = 0; j < other.getRow(i).size(); j++)
+        {
+            row->add(other.get(i, j));
+        }
+        pMatrix->add(row);
+    }
 }
 
 template <typename T>
 List2D<T>::~List2D()
 {
-    // TODO
+    for (int i = 0; i < pMatrix->size(); i++)
+    {
+        delete pMatrix->get(i);
+    }
+    delete pMatrix;
 }
 
 template <typename T>
 int List2D<T>::rows() const
 {
-    // TODO
+    return pMatrix->size();
 }
 
 template <typename T>
 void List2D<T>::setRow(int rowIndex, const List1D<T> &row)
 {
-    // TODO
+    delete pMatrix->get(rowIndex);
+    IList<T> *newRow = new XArrayList<T>();
+    for (int i = 0; i < row.size(); i++)
+    {
+        newRow->add(row.get(i));
+    }
+    pMatrix->get(rowIndex) = newRow;
 }
 
 template <typename T>
 T List2D<T>::get(int rowIndex, int colIndex) const
 {
-    // TODO
+    return pMatrix->get(rowIndex)->get(colIndex);
 }
 
 template <typename T>
 List1D<T> List2D<T>::getRow(int rowIndex) const
 {
-    // TODO
+    List1D<T> row;
+    for (int i = 0; i < pMatrix->get(rowIndex)->size(); i++)
+    {
+        row.add(pMatrix->get(rowIndex)->get(i));
+    }
+    return row;
 }
 
 template <typename T>
 string List2D<T>::toString() const
 {
-    // TODO
+    stringstream ss;
+    for (int i = 0; i < rows(); i++)
+    {
+        ss << getRow(i).toString() << "\n";
+    }
+    return ss.str();
 }
 
 template <typename T>
 ostream &operator<<(ostream &os, const List2D<T> &matrix)
 {
-    // TODO
+    for (int i = 0; i < matrix.rows(); i++)
+    {
+        os << matrix.getRow(i) << "\n";
+    }
+
     return os;
 }
 
+template <typename T>
+void List2D<T>::removeRow(int index)
+{
+    delete pMatrix->get(index); // Giải phóng bộ nhớ hàng
+    pMatrix->removeAt(index);   // Xoá hàng khỏi danh sách
+}
 // -------------------- InventoryManager Method Definitions --------------------
 InventoryManager::InventoryManager()
 {
-    // TODO
+    attributesMatrix = List2D<InventoryAttribute>();
+    productNames = List1D<string>();
+    quantities = List1D<int>();
 }
 
 InventoryManager::InventoryManager(const List2D<InventoryAttribute> &matrix,
                                    const List1D<string> &names,
-                                   const List1D<int> &quantities)
-{
-    // TODO
-}
+                                   const List1D<int> &quantities) : attributesMatrix(matrix), productNames(names), quantities(quantities) {}
 
-InventoryManager::InventoryManager(const InventoryManager &other)
-{
-    // TODO
-}
+InventoryManager::InventoryManager(const InventoryManager &other) : attributesMatrix(other.attributesMatrix),
+                                                                    productNames(other.productNames),
+                                                                    quantities(other.quantities) {}
 
 int InventoryManager::size() const
 {
-    // TODO
+    return productNames.size();
 }
 
 List1D<InventoryAttribute> InventoryManager::getProductAttributes(int index) const
 {
-    // TODO
+    return attributesMatrix.getRow(index);
 }
 
 string InventoryManager::getProductName(int index) const
 {
-    // TODO
+    return productNames.get(index);
 }
 
 int InventoryManager::getProductQuantity(int index) const
 {
-    // TODO
+    return quantities.get(index);
 }
 
 void InventoryManager::updateQuantity(int index, int newQuantity)
 {
-    // TODO
+    quantities.set(index, newQuantity);
 }
 
 void InventoryManager::addProduct(const List1D<InventoryAttribute> &attributes, const string &name, int quantity)
 {
-    // TODO
+    attributesMatrix.setRow(attributesMatrix.rows(), attributes);
+    productNames.add(name);
+    quantities.add(quantity);
 }
 
 void InventoryManager::removeProduct(int index)
 {
-    // TODO
+    productNames.remove(index);
+    quantities.remove(index);
+    attributesMatrix.removeRow(index);
 }
 
 List1D<string> InventoryManager::query(string attributeName, const double &minValue,
                                        const double &maxValue, int minQuantity, bool ascending) const
 {
-    // TODO
+    List1D<string> result;
+
+    for (int i = 0; i < size(); i++)
+    {
+        List1D<InventoryAttribute> attributes = getProductAttributes(i);
+        bool matched = false;
+
+        for (int j = 0; j < attributes.size(); j++)
+        {
+            if (attributes.get(j).name == attributeName &&
+                attributes.get(j).value >= minValue &&
+                attributes.get(j).value <= maxValue &&
+                getProductQuantity(i) >= minQuantity)
+            {
+                matched = true;
+                break;
+            }
+        }
+
+        if (matched)
+        {
+            result.add(getProductName(i));
+        }
+    }
+
+    // Sắp xếp kết quả
+    if (ascending)
+    {
+        for (int i = 0; i < result.size() - 1; i++)
+        {
+            for (int j = i + 1; j < result.size(); j++)
+            {
+                if (result.get(i) > result.get(j))
+                {
+                    string temp = result.get(i);
+                    result.set(i, result.get(j));
+                    result.set(j, temp);
+                }
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < result.size() - 1; i++)
+        {
+            for (int j = i + 1; j < result.size(); j++)
+            {
+                if (result.get(i) < result.get(j))
+                {
+                    string temp = result.get(i);
+                    result.set(i, result.get(j));
+                    result.set(j, temp);
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 void InventoryManager::removeDuplicates()
 {
-    // TODO
+    for (int i = 0; i < size(); i++)
+    {
+        for (int j = i + 1; j < size(); j++)
+        {
+            if (productNames.get(i) == productNames.get(j))
+            {
+                removeProduct(j);
+                j--;
+            }
+        }
+    }
 }
 
 InventoryManager InventoryManager::merge(const InventoryManager &inv1,
                                          const InventoryManager &inv2)
 {
-    // TODO
+    InventoryManager result = inv1;
+    for (int i = 0; i < inv2.size(); i++)
+    {
+        result.addProduct(inv2.getProductAttributes(i), inv2.getProductName(i), inv2.getProductQuantity(i));
+    }
+    return result;
 }
 
 void InventoryManager::split(InventoryManager &section1,
                              InventoryManager &section2,
                              double ratio) const
 {
-    // TODO
+    int splitIndex = size() * ratio;
+
+    for (int i = 0; i < splitIndex; i++)
+    {
+        section1.addProduct(getProductAttributes(i), getProductName(i), getProductQuantity(i));
+    }
+    for (int i = splitIndex; i < size(); i++)
+    {
+        section2.addProduct(getProductAttributes(i), getProductName(i), getProductQuantity(i));
+    }
 }
 
 List2D<InventoryAttribute> InventoryManager::getAttributesMatrix() const
 {
-    // TODO
+    return attributesMatrix;
 }
 
 List1D<string> InventoryManager::getProductNames() const
 {
-    // TODO
+    return productNames;
 }
 
 List1D<int> InventoryManager::getQuantities() const
 {
-    // TODO
+    return quantities;
 }
 
 string InventoryManager::toString() const
 {
-    // TODO
+    stringstream ss;
+    ss << left << setw(20) << "Product Name"
+       << setw(10) << "Quantity"
+       << "Attributes\n";
+
+    for (int i = 0; i < size(); i++)
+    {
+        ss << left << setw(20) << getProductName(i)
+           << setw(10) << getProductQuantity(i)
+           << getProductAttributes(i).toString() << "\n";
+    }
+    return ss.str();
+}
+
+inline ostream &operator<<(ostream &os, const InventoryAttribute &attr)
+{
+    os << "{" << attr.name << ": " << attr.value << "}";
+    return os;
+}
+
+inline bool operator==(const InventoryAttribute &lhs, const InventoryAttribute &rhs)
+{
+    return lhs.name == rhs.name && lhs.value == rhs.value;
 }
 
 #endif /* INVENTORY_MANAGER_H */
