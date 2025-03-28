@@ -578,25 +578,20 @@ void DLinkedList<T>::copyFrom(const DLinkedList<T> &list)
 template <class T>
 void DLinkedList<T>::removeInternalData()
 {
+    if (deleteUserData != nullptr)
+    {
+        deleteUserData(this); // hàm free sẽ duyệt và delete từng node->data
+    }
+
+    // Duyệt để xóa từng node (nhưng KHÔNG xóa node->data nữa!)
     Node *node = head->next;
     while (node != tail)
     {
         Node *nextNode = node->next;
-
-        // Chỉ gọi deleteUserData nếu T là con trỏ
-        if constexpr (std::is_pointer<T>::value)
-        {
-            if (deleteUserData != nullptr)
-            {
-                deleteUserData(reinterpret_cast<DLinkedList<T> *>(node->data));
-            }
-        }
-
         delete node;
         node = nextNode;
     }
 
-    // Đặt lại con trỏ head và tail
     head->next = tail;
     tail->prev = head;
     count = 0;

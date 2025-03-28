@@ -35,10 +35,16 @@ public:
 
     friend ostream &operator<<(ostream &os, const List1D<T> &list)
     {
+        os << "[";
         for (int i = 0; i < list.size(); i++)
         {
-            os << list.get(i) << " ";
+            os << list.get(i);
+            if (i < list.size() - 1)
+            {
+                os << ", ";
+            }
         }
+        os << "]";
         return os;
     };
 };
@@ -62,14 +68,16 @@ public:
     List1D<T> getRow(int rowIndex) const;
     string toString() const;
     void removeRow(int index);
+    void addRow(const List1D<T> &row);
 
-    friend ostream &operator<<(ostream &os, const List2D<T> &matrix)
+    friend ostream &
+    operator<<(ostream &os, const List2D<T> &matrix)
     {
         for (int i = 0; i < matrix.rows(); i++)
         {
+
             os << matrix.getRow(i) << "\n";
         }
-
         return os;
     };
 };
@@ -82,6 +90,13 @@ struct InventoryAttribute
     InventoryAttribute(const string &name, double value) : name(name), value(value) {}
     string toString() const;
 };
+
+string InventoryAttribute::toString() const
+{
+    stringstream ss;
+    ss << name << ": " << value;
+    return ss.str();
+}
 
 // -------------------- InventoryManager --------------------
 class InventoryManager
@@ -194,16 +209,31 @@ void List1D<T>::add(const T &value)
 template <typename T>
 string List1D<T>::toString() const
 {
-    return pList->toString();
+    stringstream ss;
+    ss << "[";
+    for (int i = 0; i < size(); i++)
+    {
+        ss << get(i);
+        if (i < size() - 1)
+            ss << ", ";
+    }
+    ss << "]";
+    return ss.str();
 }
 
 template <typename T>
 ostream &operator<<(ostream &os, const List1D<T> &list)
 {
+    os << "[";
     for (int i = 0; i < list.size(); i++)
     {
-        os << list.get(i) << " ";
+        os << list.get(i);
+        if (i < list.size() - 1)
+        {
+            os << ", ";
+        }
     }
+    os << "]";
     return os;
 }
 
@@ -297,10 +327,14 @@ template <typename T>
 string List2D<T>::toString() const
 {
     stringstream ss;
+    ss << "[";
     for (int i = 0; i < rows(); i++)
     {
-        ss << getRow(i).toString() << "\n";
+        ss << getRow(i).toString();
+        if (i < rows() - 1)
+            ss << ", ";
     }
+    ss << "]";
     return ss.str();
 }
 
@@ -321,6 +355,18 @@ void List2D<T>::removeRow(int index)
     delete pMatrix->get(index); // Giải phóng bộ nhớ hàng
     pMatrix->removeAt(index);   // Xoá hàng khỏi danh sách
 }
+
+template <typename T>
+void List2D<T>::addRow(const List1D<T> &row)
+{
+    IList<T> *newRow = new XArrayList<T>();
+    for (int i = 0; i < row.size(); i++)
+    {
+        newRow->add(row.get(i));
+    }
+    pMatrix->add(newRow);
+}
+
 // -------------------- InventoryManager Method Definitions --------------------
 InventoryManager::InventoryManager()
 {
@@ -364,7 +410,7 @@ void InventoryManager::updateQuantity(int index, int newQuantity)
 
 void InventoryManager::addProduct(const List1D<InventoryAttribute> &attributes, const string &name, int quantity)
 {
-    attributesMatrix.setRow(attributesMatrix.rows(), attributes);
+    attributesMatrix.addRow(attributes); // ✅ Thêm dòng mới một cách an toàn
     productNames.add(name);
     quantities.add(quantity);
 }
@@ -443,11 +489,19 @@ void InventoryManager::removeDuplicates()
 {
     for (int i = 0; i < size(); i++)
     {
+        string nameI = productNames.get(i);
         for (int j = i + 1; j < size(); j++)
         {
-            if (productNames.get(i) == productNames.get(j))
+            if (productNames.get(j) == nameI)
             {
+                // Cộng dồn quantity
+                int updatedQty = quantities.get(i) + quantities.get(j);
+                quantities.set(i, updatedQty);
+
+                // Xoá sản phẩm trùng tại vị trí j
                 removeProduct(j);
+
+                // Sau khi xoá, cần giảm j vì danh sách bị dồn lại
                 j--;
             }
         }
@@ -499,22 +553,17 @@ List1D<int> InventoryManager::getQuantities() const
 string InventoryManager::toString() const
 {
     stringstream ss;
-    ss << left << setw(20) << "Product Name"
-       << setw(10) << "Quantity"
-       << "Attributes\n";
-
-    for (int i = 0; i < size(); i++)
-    {
-        ss << left << setw(20) << getProductName(i)
-           << setw(10) << getProductQuantity(i)
-           << getProductAttributes(i).toString() << "\n";
-    }
+    ss << "InventoryManager[\n";
+    ss << "  AttributesMatrix: " << getAttributesMatrix().toString() << ",\n";
+    ss << "  ProductNames: " << productNames.toString() << ",\n";
+    ss << "  Quantities: " << quantities.toString() << "\n";
+    ss << "]";
     return ss.str();
 }
 
 inline ostream &operator<<(ostream &os, const InventoryAttribute &attr)
 {
-    os << "{" << attr.name << ": " << attr.value << "}";
+    os << attr.name << ": " << fixed << setprecision(6) << attr.value;
     return os;
 }
 
